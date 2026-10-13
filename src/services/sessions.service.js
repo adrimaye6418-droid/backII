@@ -1,5 +1,7 @@
 import usersRepository from "../repositories/users.repository.js";
-import { hashPassword } from "../utils/hash.js";
+import { createHash,
+    isValidPassword
+ } from "../utils/hash.js";
 
 class SessionsService {
     async register(userData) {
@@ -17,6 +19,9 @@ class SessionsService {
             !password
         ) {
             throw new Error("Faltan campos obligatorios");
+        }
+        if (typeof email !== "string") {
+            throw new Error("Email inválido");
         }
 
         const normalizedEmail = email.trim().toLowerCase();
@@ -42,7 +47,7 @@ class SessionsService {
             throw error;
         }
 
-        const hashedPassword = await hashPassword(password);
+        const hashedPassword = await createHash(password);
 
         const newUser = 
             await usersRepository.create({
@@ -61,6 +66,33 @@ class SessionsService {
             role: newUser.role,
             };
         }   
+    async login(email, password) {
+        const normalizedEmail = email.trim().toLowerCase();
+        const user = await usersRepository.getByEmail(normalizedEmail
+        );
+
+        if (!user) {
+            throw new Error("Credenciales inválidas");
+        }
+        if (typeof email !== "string") {
+            throw new Error("Credenciales inválidas");
+        }
+           
+
+        const validPassword = 
+        await isValidPassword(
+            password,
+            user.password
+        );
+       
+        if (!validPassword) {
+            throw new Error("Credenciales inválidas");
+        }
+    
+        return user;
+        };
     }
+
+
 
 export default new SessionsService();
