@@ -23,21 +23,24 @@ export const login = async (req, res) => {
       email, 
       password
     );
-   
+    const token = generateToken(user);
+
+    res.cookie("currentUser", token, {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60, // 1 hora
+    });
     res.status(200).json({
       status: "success",
-      message: "Login correcto",
-      payload: user
+      message: "Login correcto"
     });
-
   } catch (error) {
-    res.status(error.statusCode || 401).json({
+    res.status(error.statusCode || 400).json({
       status: "error",
-      message: "Credenciales inválidas",
+      message: error.message,
     });
   }
-}
 
+}
 
 export const current = async (req, res) => {
   res.status(200).json({
@@ -48,13 +51,18 @@ export const current = async (req, res) => {
 }
   
 export const logout = async (req, res) => {
-  try {
-    await sessionsService.logout(req, res);
-  } catch (error) {
-    res.status(error.statusCode || 400).json({
-      status: "error",
-      message: error.message,
-    });
-  } 
+  try{
+  res.clearCookie("currentUser");
+
+  res.status(200).json({
+    status: "success",
+    message: "Login correcto"
+  });
+} catch (error) {
+  res.status(error.statusCode || 400).json({
+    status: "error",
+    message: error.message,
+  });
+}
   
 }

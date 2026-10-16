@@ -1,6 +1,6 @@
 import usersRepository from "../repositories/users.repository.js";
 import { createHash,
-    isValidPassword
+    isValidPassword,
  } from "../utils/hash.js";
 
 class SessionsService {
