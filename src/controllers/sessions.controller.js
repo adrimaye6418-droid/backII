@@ -1,19 +1,12 @@
 import sessionsService from "../services/sessions.service.js";
+import { generateToken } from "../utils/jwt.js";
 
 export const register = async (req, res) => { 
-  try {
-    const user = await sessionsService.register(req.body);
-    res.status(201).json({
-      status: "success",
-      message: "Usuario registrado con exito",
+  res.status(201).json({
+    status: "success",
+    message: "Usuario registrado"
     });
-  } catch (error) {
-    res.status(error.statusCode || 400).json({
-      status: "error",
-      message: error.message,
-    });
-  }
-};
+  };
 
 export const login = async (req, res) => {
   try {
@@ -46,23 +39,21 @@ export const current = async (req, res) => {
   res.status(200).json({
     status: "success",
     message: "Usuario autenticado",
-    payload: req.user
+    payload: { user: req.user,
+              email: req.user.email,
+              role: req.user.role,
+    }
   });
 }
   
 export const logout = async (req, res) => {
-  try{
-  res.clearCookie("currentUser");
-
+  res.clearCookie("currentUser", {
+    httpOnly: true,
+    sameSite: "lax",
+  });
   res.status(200).json({
     status: "success",
-    message: "Login correcto"
+    message: "Logout correcto"
   });
-} catch (error) {
-  res.status(error.statusCode || 400).json({
-    status: "error",
-    message: error.message,
-  });
-}
+};
   
-}
