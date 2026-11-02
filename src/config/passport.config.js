@@ -36,7 +36,7 @@ const initializePassport = () => {
                              });
                     }
 
-                    const hashedPassword =  bcrypt.hashSync(password, 10);
+                    const hashedPassword =  await bcrypt.hash(password, 10);
 
                     const newUser = await UserModel.create({
                         first_name: req.body.first_name,
@@ -79,7 +79,7 @@ const initializePassport = () => {
                         });
                     }
 
-                    const isValid = bcrypt.compareSync(password, user.password);
+                    const isValid = await bcrypt.compare(password, user.password);
                 
                 if (!isValid) {
                         return done(null, false, {
