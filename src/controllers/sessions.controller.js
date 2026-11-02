@@ -2,6 +2,7 @@ import sessionsService from "../services/sessions.service.js";
 import { generateToken } from "../utils/jwt.js";
 
 export const register = async (req, res) => { 
+  
   res.status(201).json({
     status: "success",
     message: "Usuario registrado"

@@ -1,15 +1,41 @@
-class Event {
-  constructor({
-    title,
-    description,
-    date,
-    capacity,
-  }) {
-    this.title = title;
-    this.description = description;
-    this.date = date;
-    this.capacity = capacity;
-  }
-}
+import mongoose from "mongoose";
 
-export default Event;
+const eventSchema = new mongoose.Schema(
+    {
+        title: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        description: {
+            type: String,
+            default: "",
+        },
+        date: {
+            type: Date,
+            required: true,
+        },
+        location: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        status: {
+            type: String,
+            enum: ["draft", "published",  "cancelled"],
+            default: "published",
+        },
+        organizer: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },  
+      },
+    {
+        timestamps: true,
+    }
+);
+
+const EventModel = mongoose.model("Event", eventSchema);
+
+export default EventModel;

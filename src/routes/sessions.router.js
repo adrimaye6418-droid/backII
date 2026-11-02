@@ -6,6 +6,7 @@ import { register,
         } from "../controllers/sessions.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
 import passport from "passport";
+import { authenticate } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -48,7 +49,7 @@ router.post("/login", (req, res, next) => {passport.authenticate("login", { sess
 },
  login);
 
-router.get("/current", (req, res, next) => {
+router.get("/current", authenticate, (req, res, next) => {
         passport.authenticate("current", { session: false }, (error, user) => {
                 if (error) {
                         return next(error);

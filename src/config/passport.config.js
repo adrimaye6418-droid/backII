@@ -39,10 +39,11 @@ const initializePassport = () => {
                     const hashedPassword =  bcrypt.hashSync(password, 10);
 
                     const newUser = await UserModel.create({
-                        ...req.body,
+                        first_name: req.body.first_name,
+                        last_name: req.body.last_name,
                         email: normalizedEmail,
                         password: hashedPassword,
-                        role: req.body.role || "user",
+                        role: "user",
                     });
 
                     return done(null, newUser);
@@ -110,7 +111,14 @@ const initializePassport = () => {
             },
             async (jwtPayload, done) => {
                 try {
-                    return done(null, jwtPayload);
+                    const user = await UserModel.findById(jwtPayload.id).select("-password");
+
+                    if (!user) {
+                        return done(null, false, {
+                            message: "Usuario no encontrado",
+                        });
+                    }
+                    return done(null, user);
                 } catch (error) {
                     return done(error, false);
                 }
