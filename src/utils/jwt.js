@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-export const login = (req, res) => {
+export const loginjwt = (req, res) => {
 
   const token = jwt.sign(
     {
@@ -16,6 +16,9 @@ export const login = (req, res) => {
 
   res.cookie("currentUser", token, {
     httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60*60*1000, // 1 hora
   });
 
   res.status(200).json({
@@ -28,16 +31,17 @@ export const login = (req, res) => {
 export const generateToken = (user) => {
   return jwt.sign(
     {
-      id: user._id,
+      id: user._id.toString(),
       email: user.email,
       role: user.role
     },
     process.env.JWT_SECRET,
     {
-      expiresIn: process.env.JWT_EXPIRES_IN
+      expiresIn: process.env.JWT_EXPIRES_IN || "1h"
     }
   );
-};
+}
+
 
 export const verifyToken = (token) => {
   return jwt.verify(

@@ -5,6 +5,7 @@ import usersRouter from "./routes/users.router.js";
 import sessionsRouter from "./routes/sessions.router.js";
 import passport from "passport";
 import initializePassport  from "./config/passport.config.js";
+import registrationRouter from "./routes/resgistration.routes.js";
 
 
 
@@ -27,12 +28,25 @@ app.get("/api/health", (req, res) => {
 app.use("/api/sessions", sessionsRouter);
 app.use("/api/events", eventsRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/registrations", registrationRouter);
 
 app.use((error, req, res, next) => {
     console.error(error);
-    res.status(500).json({
+
+    if (error.name === "ValidationError") {
+        const messages = Object.values(error.errors).map((item) => item.message);
+        return res.status(400).json({
+            status: "error",
+            message: "Error de validación",
+        });
+    }
+        return res.status(error.status || 500).json({
         status: "error",
-        message: "Error interno del servidor",
+        message: 
+            error.statusCode
+            ? error.message
+            :"Error interno del servidor",
+ 
     });
 });
 

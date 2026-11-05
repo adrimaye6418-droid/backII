@@ -4,7 +4,6 @@ import { register,
          current,
          logout
         } from "../controllers/sessions.controller.js";
-import { auth } from "../middlewares/auth.middleware.js";
 import passport from "passport";
 import { authenticate } from "../middlewares/auth.middleware.js";
 
@@ -49,21 +48,8 @@ router.post("/login", (req, res, next) => {passport.authenticate("login", { sess
 },
  login);
 
-router.get("/current", authenticate, (req, res, next) => {
-        passport.authenticate("current", { session: false }, (error, user) => {
-                if (error) {
-                        return next(error);
-                }                        
-
-                if (!user) {
-                        return res.status(401).json({
-                                status: "error",
-                                message: "No se pudo autenticar el usuario"
-                        });
-                }
-                req.user = user;
-                return current(req, res);
-        })(req, res, next);
+router.get("/current", authenticate, (req, res) => {
+        current(req, res);
 });
 
 router.post("/logout", logout);

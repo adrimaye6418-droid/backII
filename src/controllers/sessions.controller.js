@@ -1,5 +1,6 @@
 import { generateToken } from "../utils/jwt.js";
 
+
 export const register = async (req, res) => { 
   
   res.status(201).json({
@@ -9,16 +10,24 @@ export const register = async (req, res) => {
   };
 
 export const login = async (req, res) => {
-  res.cookie("currentUser", req.user.generateToken(), {
-    httpOnly: true,
-    sameSite: "strict",
-    secure: false,
+  try {
+    const token = generateToken(req.user);
+    res.cookie("currentUser", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60*60*1000, // 1 hora
   });
-  res.status(200).json({
+  return res.status(200).json({
     status: "success",
-    payload: req.user,
-  });
-};
+    message: "Login correcto",
+    });
+  }
+  catch (error) {
+    return next (error);
+  }
+  
+}
 
 export const current = async (req, res) => {
   res.status(200).json({
