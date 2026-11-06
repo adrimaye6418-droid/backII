@@ -15,7 +15,9 @@ export const authorize = (...allowedRoles) => {
         message: "No tenés permisos para realizar esta acción",
       });
     }
-
-    next();
+    if (error) {
+      return next(error);
+    }
+    
   };
 };

@@ -11,8 +11,13 @@ const eventSchema = new mongoose.Schema(
             type: String,
             required: [true, "La descripción es obligatoria"],
             trim: true,
-            lowercase: true,
         },
+        category: {
+            type: String,
+            required: [true, "La categoría es obligatoria"],
+            trim: true,
+            lowercase: true,
+    },
         date: {
             type: Date,
             required: [true, "La fecha es obligatoria"],

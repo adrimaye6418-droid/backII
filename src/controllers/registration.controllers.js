@@ -4,7 +4,7 @@ export const createRegistration = async (req, res, next) => {
   try {
     const { eventId } = req.params;
 
-    const registration = await userSchema.create({
+    const registration = await user.create({
       event: eventId,
       user: req.user._id,
     });

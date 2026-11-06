@@ -1,19 +1,22 @@
-import { verifyToken } from "../utils/jwt.js";
 import passport from "passport";
 
 export const authenticate = (req, res, next) => {
   passport.authenticate(
     "current", 
     { session: false }, 
-    (error, user) => {
+    (error, user, info) => {
+      if (error) {
+        return next(error);
+      }
     
-    if (!user) {
-      return res.status(401).json({
-        status: "error",
-        message: "No autenticado"
+      if (!user) {
+        return res.status(401).json({
+          status: "error",
+          message: info?.message || "No autenticado",
       });
     }
-    req.user = user;
-    next();
-  })(req, res, next);
+      req.user = user;
+      return next();
+    })(req, res, next);
+
 };
