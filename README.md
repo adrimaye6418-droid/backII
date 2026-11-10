@@ -268,4 +268,29 @@ GET /api/users: solamente admin.
 ✅ Visualizacion de eventos disponibles
 
 
+Se realizaron pruebas automatizadas y manuales para comprobar que la refactorización a la arquitectura DAO, Repository, Service, Controller y DTO no alteró el comportamiento externo de la API.
 
+Las pruebas verifican:
+
+Separación correcta de responsabilidades.
+Autenticación mediante Passport y JWT.
+Protección de datos sensibles.
+Gestión de eventos.
+Inscripción mediante tickets.
+Control de cupos.
+Prevención de inscripciones duplicadas.
+Cancelación lógica.
+Control de permisos.
+Manejo consistente de errores.
+
+Pruebas automatizadas
+Las pruebas se ejecutan con:
+
+npm test
+
+PASS test/architecture.test.js
+PASS test/passport.config.test.js
+
+Test Suites: 2 passed, 2 total
+Tests:       19 passed, 19 total
+Snapshots:   0 total

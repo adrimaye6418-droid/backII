@@ -47,14 +47,17 @@ class TicketsService {
       );
     }
 
-    if (
-      event.status === "cancelled" ||
-      event.status === "finalized"
-    ) {
-      throw new AppError(
-        "No es posible inscribirse en un evento cancelado o finalizado",
-        400
-      );
+    if (event.status === "finalized") {
+        throw new AppError(
+      "No es posible inscribirse en un evento finalizado",
+      409
+        );
+    }
+    if (event.status !== "published") {
+    throw new AppError(
+      "El evento no está publicado",
+      409
+        );
     }
 
     if (new Date(event.date) <= new Date()) {

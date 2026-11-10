@@ -1,130 +1,204 @@
 import "dotenv/config";
 import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local";
-import { Strategy as JWTStrategy, ExtractJwt } from "passport-jwt";
-import UserModel from "../models/user.js";
-import bcrypt from "bcrypt";
+import { Strategy as LocalStrategy,} from "passport-local";
+import { Strategy as JWTStrategy,
+            ExtractJwt,
+} from "passport-jwt";
+import sessionsService from "../services/sessions.service.js";
 
 const cookieExtractor = (req) => {
-    if (req && req.cookies) {
-        return req.cookies.currentUser;
-    }
-    return null;
+  if (
+    req &&
+    req.cookies &&
+    req.cookies.currentUser
+  ) {
+    return req.cookies.currentUser;
+  }
+
+  return null;
 };
 
-// Configuración de la estrategia local
+const getPassportErrorInfo = (
+  error,
+  defaultMessage
+) => {
+  return {
+    message:
+      error?.message ||
+      defaultMessage,
+
+    status:
+      error?.statusCode ||
+      500,
+  };
+};
 
 const initializePassport = () => {
+        passport.use(
+            "register", new LocalStrategy(
+      {
+        usernameField: "email",
+        passwordField: "password",
+        passReqToCallback: true,
+        session: false,
+      },
 
-    // Estrategia de registro
-    passport.use(
-        "register",
-        new LocalStrategy(
-            {   usernameField: "email", 
-                passwordField: "password",
-                passReqToCallback: true,
-            },
-            async (req, email, password, done) => {
-                try { 
-                    const normalizedEmail = email.trim().toLowerCase();
-                    const existingUser = await UserModel.findOne({ email: normalizedEmail });
+      async (
+        req,
+        email,
+        password,
+        done
+      ) => {
+        try {
+          const result = await sessionsService.register({
+              first_name: req.body.first_name,
+              last_name: req.body.last_name,
+              email,
+              password,
+            });
 
-                    if (existingUser) {
-                        return done(null, false, 
-                            { message: "Usuario ya existente",
-                              status: 409,
-                             });
-                    }
+          return done(
+            null,
+            result.userDocument
+          );
+        } catch (error) {
+          if (
+            error?.statusCode >= 400 &&
+            error?.statusCode < 500
+          ) {
+            return done(
+              null,
+              false,
+              getPassportErrorInfo(
+                error,
+                "No se pudo registrar el usuario"
+              )
+            );
+          }
+          return done(error);
+        }
+      }
+    )
+  );
 
-                    const hashedPassword =  await bcrypt.hash(password, 10);
+  passport.use("login", new LocalStrategy(
+      {
+        usernameField: "email",
+        passwordField: "password",
+        session: false,
+      },
 
-                    const newUser = await UserModel.create({
-                        first_name: req.body.first_name,
-                        last_name: req.body.last_name,
-                        email: normalizedEmail,
-                        password: hashedPassword,
-                        role: "user",
-                    });
+      async (
+        email,
+        password,
+        done
+      ) => {
+        try {
+          const user = await sessionsService.login(
+              email,
+              password
+            );
 
-                    return done(null, newUser);
-                } catch (error) {
-                    if (error.code === 11000) {
-                        return done(null, false, {
-                            message: "El correo electrónico ya está en uso",
-                            status: 409,
-                        });
-                    }
-                    return done(error);
-                }
-            }
-        )
-    );
+          return done(
+            null,
+            user
+          );
+        } catch (error) {
+          if (
+            error.statusCode >= 400 &&
+            error.statusCode < 500
+          ) {
+            return done(
+              null,
+              false,
+              getPassportErrorInfo(
+                error,
+                "Credenciales invalidas"
+              )
+            );
+          }
+          return done(error);
+        }
+      }
+    )
+  );
 
-    // Estrategia de login
-    passport.use(
-        "login",
-        new LocalStrategy(
-            {   usernameField: "email",
-                passwordField: "password",
-             },
-            async (email, password, done) => {
-                try {
-                    const normalizedEmail = email.trim().toLowerCase();
-                    const user = await UserModel.findOne({ email: normalizedEmail });
+  passport.use( "current",
+    new JWTStrategy(
+      {
+        jwtFromRequest: ExtractJwt.fromExtractors([
+            cookieExtractor,
+          ]),
 
-                    if (!user) {
-                        return done(null, false, {
-                            message: "Usuario no encontrado",
-                            status: 404,
-                        });
-                    }
+        secretOrKey: process.env.JWT_SECRET,
+      },
 
-                    const isValid = await bcrypt.compare(password, user.password);
-                
-                if (!isValid) {
-                        return done(null, false, {
-                            message: "Credenciales inválidas",
-                            status: 401,
-                        });
-                    }
+      async (
+        jwtPayload,
+        done
+      ) => {
+        try {
+          const userId =
+            jwtPayload?.id ||
+            jwtPayload?._id;
 
-                    return done(null, user);
+          if (!userId) {
+            return done(
+              null,
+              false,
+              {
+                message:
+                  "Token invalido",
+                status: 401,
+              }
+            );
+          }
 
-                } catch (error) {
+          const user =
+            await sessionsService
+              .getCurrentUser(
+                userId
+              );
 
-                    return done(error);
-                }
-            }
-        )
-    );
+          if (!user) {
+            return done(
+              null,
+              false,
+              {
+                message:
+                  "Usuario no encontrado",
+                status: 401,
+              }
+            );
+          }
 
-    // CURRENT
-
-    passport.use(
-        "current",
-        new JWTStrategy(
-            {
-                jwtFromRequest: ExtractJwt.fromExtractors([
-                    (req) => req?.cookies?.currentUser || null,
-                ]),
-                secretOrKey: process.env.JWT_SECRET,
-            },
-            async (jwtPayload, done) => {
-                try {
-                    const user = await UserModel.findById(jwtPayload.id).select("-password");
-
-                    if (!user) {
-                        return done(null, false, {
-                            message: "Usuario no encontrado",
-                        });
-                    }
-                    return done(null, user);
-                } catch (error) {
-                    return done(error, false);
-                }
-            }
-        )
-    );
+          return done(
+            null,
+            user
+          );
+        } catch (error) {
+          if (
+            error.statusCode === 401 ||
+            error.statusCode === 404
+          ) {
+            return done(
+              null,
+              false,
+              {
+                message:
+                  error.message,
+                status: 401,
+              }
+            );
+          }
+          return done(
+            error,
+            false
+          );
+        }
+      }
+    )
+  );
 };
 
 export default initializePassport;

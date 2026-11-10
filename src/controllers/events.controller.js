@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-import EventModel from "../models/event.js";
 import eventsService from "../services/events.service.js";
 
 export const createEvent = async (req, res, next) => {
@@ -59,7 +57,7 @@ export const changeEventStatus = async (req, res, next) => {
   try {
     const event = await eventsService.changeStatus(
       req.params.id,
-      req.body.status,
+      req.body?.status,
       req.user
     );
     return res.status(200).json({
@@ -67,6 +65,6 @@ export const changeEventStatus = async (req, res, next) => {
       payload: event,
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
