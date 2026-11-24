@@ -22,10 +22,10 @@ router.get("/:id", getEventById);
 
 // Crear un evento
 router.post(
-    "/", 
-    authenticate,
-    authorize("organizer" , "admin"),
-    createEvent
+  "/events",
+  passportCall("current"),
+  authorization(["organizer", "admin"]),
+  createEvent
 );
 
 // Crear una inscripción para un evento

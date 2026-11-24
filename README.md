@@ -45,176 +45,91 @@ nodemon
   "message": "Servidor activo"
 }
 
- * Registro
+ ** Variables de entorno
+
+Crear archivo .env a partir de .env.example
+
+PORT=8080
+MONGO_URL=mongodb+srv://...
+JWT_SECRET=...
+JWT_EXPIRES_IN=1d
+
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USER=...
+MAIL_PASS=...
+MAIL_FROM=...
+
+ ** Arquitectura
+
+src/
+├── config/
+├── controllers/
+├── dao/
+├── dto/
+├── middlewares/
+├── models/
+├── repositories/
+├── routes/
+├── services/
+└── utils/
+
+
+Los modelos de Mongoose son consumidos únicamente por los DAO.
+Los repositories encapsulan el acceso a datos.
+Los services contienen la lógica de negocio.
+Los controllers gestionan request y response.
+Los DTO controlan la información expuesta al cliente.
+
+ ** Endpoints
+
+  *** Sessions
 
       POST /api/sessions/register
-
-      Descripción: Se registra un nuevo usuario.
-
-Body:
-
-{
-  "first_name": "Ana",
-  "last_name": "Perez",
-  "email": "ana@mail.com",
-  "password": "Secreta123"
-}
-
-Respuesta 201:
-
-{
-  "status": "success",
-  "payload": {
-    "id": "68c...",
-    "first_name": "Ana",
-    "last_name": "Perez",
-    "email": "ana@mail.com",
-    "role": "user"
-  }
-}
-
- * Login
-
       POST /api/sessions/login
-
-Descripción: Se autentica un usuario y genera una cookie HTTP Only con JWT.
-
-Body:
-
-{
-  "email": "ana@mail.com",
-  "password": "Secreta123"
-}
-
-Respuesta 200:
-
-{
-  "status": "success",
-  "message": "Login correcto"
-}
-
-Respuesta 401:
-
-{
-  "status": "error",
-  "message": "Credenciales inválidas"
-}
-
- * Usuario actual
       GET /api/sessions/current
-Descripción: Devuelve los datos del usuario autenticado.
-
-Respuesta 200:
-
-{
-  "status": "success",
-  "payload": {
-    "id": "68c...",
-    "email": "ana@mail.com",
-    "role": "user"
-  }
-}
-Respuesta 401:
-
-{
-  "status": "error",
-  "message": "No autenticado"
-}
-
- * Logout
       POST /api/sessions/logout
-Descripción: Elimina la cookie de autenticación.
 
-Respuesta 200:
+  *** Events
 
-{
-  "status": "success",
-  "message": "Sesión cerrada"
-}
-
- * Crear un evento sin iniciar sesión
+      GET /api/events
+      GET /api/events/:id
       POST /api/events
+      PUT /api/events/:id
+      PATCH /api/events/:id/status
 
-{
-  "title": "Congreso Tech 2026",
-  "description": "Evento de tecnología",
-  "date": "2026-12-10T18:00:00.000Z",
-  "location": "Buenos Aires"
-}
-Respuesta 401 Unauthorized
+  *** Tickets
 
-{
-  "status": "error",
-  "message": "No autenticado"
-}
+      POST /api/events/:eid/tickets
+      GET /api/events/:eid/tickets
+      GET /api/tickets/my-tickets
+      PATCH /api/tickets/:tid/cancel
 
- * Crear un evento con rol user
-Respuesta 403 Forbidden
+ *** Users
 
-{
-  "status": "error",
-  "message": "No tenés permisos para realizar esta acción"
-}
+      GET /api/users
 
- * Crear un evento con rol admin
-Respuesta 201 Created
 
-{
-  "status": "success",
-  "payload": {
-    "id": "67195eb89c813f52c1123456",
-    "title": "Congreso Tech 2026",
-    "organizer": "67195d719c813f52c1654321"
-  }
-}
+  ** Flujo de inscripción
 
- * Consultar eventos publicados
-Respuesta 200 OK
+      El organizer crea un evento.
+      El evento se publica.
+      Un usuario inicia sesión.
+      El usuario se inscribe.
+      Se genera un ticket.
+      Se envía email de confirmación.
+      Se descuenta capacidad disponible.
+      El usuario puede cancelar el ticket.
+      El cupo vuelve a liberarse. 
 
-{
-  "status": "success",
-  "payload": [
-    {
-      "_id": "67195eb89c813f52c1123456",
-      "title": "Congreso Tech 2026",
-      "description": "Evento de tecnología",
-      "date": "2026-12-10T18:00:00.000Z",
-      "location": "Buenos Aires",
-      "status": "published",
-      "organizer": {
-        "_id": "67195d719c813f52c1654321",
-        "first_name": "Adriana",
-        "last_name": "Cancino",
-        "email": "organizador@mail.com"
-      }
-    }
-  ]
-}
- * Admin modificando cualquier evento
-Respuesta 200 OK
-{
-  "status": "success",
-  "payload": {
-    "_id": "67195eb89c813f52c1123456",
-    "title": "Evento actualizado por administrador",
-    "description": "Evento de tecnología",
-    "date": "2026-12-10T18:00:00.000Z",
-    "location": "Buenos Aires",
-    "status": "published",
-    "organizer": "67195d719c813f52c1654321"
-  }
-}
+  ** Usuarios de prueba
+Admin: admin@mail.com
 
- * Seguridad implementada
+Organizer: organizador@mail.com
 
-Contraseñas hasheadas con bcrypt.
-JWT firmado mediante JWT_SECRET.
-Cookie HTTP Only.
-Validación de email.
-Validación de campos obligatorios.
-Control de emails duplicados.
-Protección de rutas mediante middleware auth.
-El password nunca se devuelve en las respuestas.
+User: mariagon@mail.com
+
+
 
  * Roles y permisos
 
